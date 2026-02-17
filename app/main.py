@@ -25,3 +25,7 @@ async def bulk_upload(file: UploadFile = File(...)):
     contents = await file.read()
     result = process_excel(contents)
     return result
+
+@app.get("/download-failures")
+def download_failures():
+    return FileResponse("/tmp/failures.xlsx", filename="failures.xlsx")

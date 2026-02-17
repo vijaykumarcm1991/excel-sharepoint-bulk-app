@@ -2,6 +2,7 @@ import pandas as pd
 from io import BytesIO
 from app.utils.product_mapper import PRODUCT_MAP
 from app.services.flow_service import send_to_flow
+import os
 
 REQUIRED_COLUMNS = [
     "ListName",
@@ -73,5 +74,18 @@ def process_excel(file_bytes):
                 "status": "Error",
                 "reason": str(e)
             })
+
+    # Remove old failure file if exists
+    failure_file_path = "/tmp/failures.xlsx"
+    if os.path.exists(failure_file_path):
+        os.remove(failure_file_path)
+
+    # --- Generate Failure Report ---
+    result_df = pd.DataFrame(results)
+
+    failure_df = result_df[result_df["status"] == "Failed"]
+
+    if not failure_df.empty:
+        failure_df.to_excel("/tmp/failures.xlsx", index=False)
 
     return {"summary": results}
