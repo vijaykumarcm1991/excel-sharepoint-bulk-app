@@ -36,11 +36,10 @@ def process_excel(file_bytes):
             product_name = str(row["ProductName"]).strip().upper()
 
             if product_name not in PRODUCT_MAP:
-                results.append({
-                    "row": index + 2,
-                    "status": "Failed",
-                    "reason": "Invalid Product Name"
-                })
+                row_result = row.to_dict()
+                row_result["Status"] = "Failed"
+                row_result["Reason"] = "Invalid Product Name"
+                results.append(row_result)
                 continue
 
             payload = {
@@ -54,26 +53,22 @@ def process_excel(file_bytes):
 
             status_code, flow_result = send_to_flow(payload)
 
+            row_result = row.to_dict()  # get full Excel row
+
             if status_code == 200:
-                results.append({
-                    "row": index + 2,
-                    "IncidentID": payload["IncidentID"],
-                    "status": flow_result.get("status", "Created")
-                })
+                row_result["Status"] = flow_result.get("status", "Created")
+                row_result["Reason"] = ""
             else:
-                results.append({
-                    "row": index + 2,
-                    "IncidentID": payload["IncidentID"],
-                    "status": "Failed",
-                    "reason": flow_result.get("error", "Unknown error")
-                })
+                row_result["Status"] = "Failed"
+                row_result["Reason"] = flow_result.get("error", "Unknown error")
+
+            results.append(row_result)
 
         except Exception as e:
-            results.append({
-                "row": index + 2,
-                "status": "Error",
-                "reason": str(e)
-            })
+            row_result = row.to_dict()
+            row_result["Status"] = "Error"
+            row_result["Reason"] = str(e)
+            results.append(row_result)
 
     # Remove old failure file if exists
     failure_file_path = "/tmp/failures.xlsx"
@@ -83,9 +78,9 @@ def process_excel(file_bytes):
     # --- Generate Failure Report ---
     result_df = pd.DataFrame(results)
 
-    failure_df = result_df[result_df["status"] == "Failed"]
+    failure_df = result_df[result_df["Status"].isin(["Failed", "Error"])]
 
     if not failure_df.empty:
-        failure_df.to_excel("/tmp/failures.xlsx", index=False)
+        failure_df.to_excel(failure_file_path, index=False)
 
     return {"summary": results}

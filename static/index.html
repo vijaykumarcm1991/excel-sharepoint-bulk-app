@@ -29,17 +29,7 @@
 
             <hr>
 
-            <table id="resultTable" class="display" style="width:100%">
-                <thead>
-                    <tr>
-                        <th>Row</th>
-                        <th>Incident ID</th>
-                        <th>Status</th>
-                        <th>Reason</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+            <table id="resultTable" class="display" style="width:100%"></table>
 
             <button id="downloadBtn" class="btn btn-danger mt-3" style="display:none;" onclick="downloadFailures()">
                 Download Failure Report
@@ -51,10 +41,6 @@
 
 <script>
 let table;
-
-$(document).ready(function(){
-    table = $('#resultTable').DataTable();
-});
 
 async function uploadFile() {
 
@@ -77,28 +63,38 @@ async function uploadFile() {
 
     const data = await response.json();
 
+    if (data.error) {
+        alert(data.error);
+        document.getElementById("loading").style.display = "none";
+        return;
+    }
+
     document.getElementById("loading").style.display = "none";
 
-    table.clear();
-    let hasFailure = false;
+    const rows = data.summary;
 
-    data.summary.forEach(row => {
+    if (!rows || rows.length === 0) return;
 
-        table.row.add([
-            row.row,
-            row.IncidentID || "",
-            row.status,
-            row.reason || ""
-        ]);
+    // Destroy existing table
+    if ($.fn.DataTable.isDataTable('#resultTable')) {
+        $('#resultTable').DataTable().destroy();
+        $('#resultTable').empty();
+    }
 
-        if(row.status === "Failed"){
-            hasFailure = true;
-        }
+    // Generate dynamic columns
+    const columns = Object.keys(rows[0]).map(key => ({
+        title: key,
+        data: key
+    }));
+
+    table = $('#resultTable').DataTable({
+        data: rows,
+        columns: columns
     });
 
-    table.draw();
-
-    if(hasFailure){
+    // Show download button if failure exists
+    const hasFailure = rows.some(r => r.Status === "Failed");
+    if (hasFailure) {
         document.getElementById("downloadBtn").style.display = "inline-block";
     }
 }
@@ -107,6 +103,5 @@ function downloadFailures(){
     window.location.href = "/download-failures";
 }
 </script>
-
 </body>
 </html>
