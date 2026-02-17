@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bulk SharePoint Upload</title>
+</head>
+<body>
+    <h2>Upload Structured Excel</h2>
+    <input type="file" id="fileInput">
+    <button onclick="uploadFile()">Upload</button>
+
+    <pre id="result"></pre>
+
+<script>
+async function uploadFile() {
+    const fileInput = document.getElementById("fileInput");
+    const formData = new FormData();
+    formData.append("file", fileInput.files[0]);
+
+    const response = await fetch("http://localhost:8000/bulk-upload", {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await response.json();
+    document.getElementById("result").textContent =
+        JSON.stringify(data, null, 2);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+services:
+  bulk-app:
+    build: .
+    container_name: bulk-sharepoint-app
+    ports:
+      - "7000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
