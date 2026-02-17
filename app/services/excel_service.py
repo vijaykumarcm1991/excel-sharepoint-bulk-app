@@ -53,7 +53,7 @@ def process_excel(file_bytes):
 
             status_code, flow_result = send_to_flow(payload)
 
-            row_result = row.to_dict()  # get full Excel row
+            row_result = {col: safe_value(row[col]) for col in row.index}  # get full Excel row
 
             if status_code == 200:
                 row_result["Status"] = flow_result.get("status", "Created")

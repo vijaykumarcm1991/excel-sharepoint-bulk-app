@@ -27,6 +27,36 @@
                 Processing... Please wait...
             </div>
 
+            <!-- Summary Cards -->
+            <div class="row mt-4" id="summarySection" style="display:none;">
+                <div class="col-md-4">
+                    <div class="card text-bg-secondary">
+                        <div class="card-body">
+                            <h5>Total Rows</h5>
+                            <h3 id="totalCount">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card text-bg-success">
+                        <div class="card-body">
+                            <h5>Created</h5>
+                            <h3 id="createdCount">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card text-bg-danger">
+                        <div class="card-body">
+                            <h5>Failed</h5>
+                            <h3 id="failedCount">0</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <hr>
 
             <table id="resultTable" class="display" style="width:100%"></table>
@@ -63,16 +93,14 @@ async function uploadFile() {
 
     const data = await response.json();
 
+    document.getElementById("loading").style.display = "none";
+
     if (data.error) {
         alert(data.error);
-        document.getElementById("loading").style.display = "none";
         return;
     }
 
-    document.getElementById("loading").style.display = "none";
-
     const rows = data.summary;
-
     if (!rows || rows.length === 0) return;
 
     // Destroy existing table
@@ -89,12 +117,31 @@ async function uploadFile() {
 
     table = $('#resultTable').DataTable({
         data: rows,
-        columns: columns
+        columns: columns,
+        createdRow: function(row, data, dataIndex) {
+
+            if (data.Status === "Failed") {
+                $(row).addClass('table-danger');
+            }
+
+            if (data.Status === "Created") {
+                $(row).addClass('table-success');
+            }
+        }
     });
 
-    // Show download button if failure exists
-    const hasFailure = rows.some(r => r.Status === "Failed");
-    if (hasFailure) {
+    // Summary Counters
+    const total = rows.length;
+    const created = rows.filter(r => r.Status === "Created").length;
+    const failed = rows.filter(r => r.Status === "Failed").length;
+
+    document.getElementById("totalCount").innerText = total;
+    document.getElementById("createdCount").innerText = created;
+    document.getElementById("failedCount").innerText = failed;
+
+    document.getElementById("summarySection").style.display = "flex";
+
+    if (failed > 0) {
         document.getElementById("downloadBtn").style.display = "inline-block";
     }
 }
@@ -103,5 +150,6 @@ function downloadFailures(){
     window.location.href = "/download-failures";
 }
 </script>
+
 </body>
 </html>
