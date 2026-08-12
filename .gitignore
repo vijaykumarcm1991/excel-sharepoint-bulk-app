@@ -1,3 +1,5 @@
 .env
 __pycache__/
 *.pyc
+.venv/
+verify_fixes.py

@@ -1,8 +1,9 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.services.excel_service import process_excel
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+import os
 
 app = FastAPI()
 
@@ -28,4 +29,10 @@ async def bulk_upload(file: UploadFile = File(...)):
 
 @app.get("/download-failures")
 def download_failures():
-    return FileResponse("/tmp/failures.xlsx", filename="failures.xlsx")
+    failure_file_path = "/tmp/failures.xlsx"
+    if not os.path.exists(failure_file_path):
+        raise HTTPException(
+            status_code=404,
+            detail="No failure report available. Upload a file with failures first."
+        )
+    return FileResponse(failure_file_path, filename="failures.xlsx")

@@ -36,7 +36,7 @@ def process_excel(file_bytes):
             product_name = str(row["ProductName"]).strip().upper()
 
             if product_name not in PRODUCT_MAP:
-                row_result = row.to_dict()
+                row_result = {col: safe_value(row[col]) for col in row.index}
                 row_result["Status"] = "Failed"
                 row_result["Reason"] = "Invalid Product Name"
                 results.append(row_result)
@@ -65,7 +65,7 @@ def process_excel(file_bytes):
             results.append(row_result)
 
         except Exception as e:
-            row_result = row.to_dict()
+            row_result = {col: safe_value(row[col]) for col in row.index}
             row_result["Status"] = "Error"
             row_result["Reason"] = str(e)
             results.append(row_result)
